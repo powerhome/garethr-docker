@@ -26,6 +26,9 @@
 #   The local user to log in as. Docker will store credentials in this
 #   users home directory
 #
+# [*cwd*]
+#   The directory in which to execute docker login.
+#
 #
 define docker::registry(
   $server      = $title,
@@ -34,6 +37,7 @@ define docker::registry(
   $password    = undef,
   $email       = undef,
   $local_user  = 'root',
+  $cwd         = '/root',
 ) {
   include docker::params
 
@@ -64,6 +68,7 @@ define docker::registry(
     environment => $auth_environment,
     command     => $auth_cmd,
     user        => $local_user,
+    cwd         => $cwd,
     path        => ['/bin', '/usr/bin'],
     timeout     => 0,
   }
