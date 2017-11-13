@@ -64,7 +64,6 @@ define docker::registry(
     environment => $auth_environment,
     command     => $auth_cmd,
     user        => $local_user,
-    cwd         => '/root',
     path        => ['/bin', '/usr/bin'],
     timeout     => 0,
   }
