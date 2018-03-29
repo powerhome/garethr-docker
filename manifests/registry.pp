@@ -29,6 +29,12 @@
 # [*cwd*]
 #   The directory in which to execute docker login.
 #
+# [*receipt*]
+#   Creates a receipt file for this specific registry preventing the exec
+#   modifing config.json from triggering every puppet run.
+#   Caveat: if you modify the entry for this registry in
+#   /root/.docker/config.json outside of puppet the exec won't trigger
+#   again unless the receipt is removed.
 #
 define docker::registry(
   $server      = $title,
@@ -38,10 +44,12 @@ define docker::registry(
   $email       = undef,
   $local_user  = 'root',
   $cwd         = '/root',
+  $receipt     = false,
 ) {
   include docker::params
 
   validate_re($ensure, '^(present|absent)$')
+  validate_bool($receipt)
 
   $docker_command = $docker::params::docker_command
 
@@ -64,6 +72,15 @@ define docker::registry(
     $auth_environment = undef
   }
 
+  # Using Receipt?
+  if $receipt {
+    file { "/root/.docker/registry-auth-puppet_receipt_${title}":
+      ensure  => $ensure,
+      content => pw_hash("${title}${auth_environment}${auth_cmd}${local_user}", 'SHA-512', $local_user),
+      notify  => Exec["${title} auth"],
+    }
+  }
+
   exec { "${title} auth":
     environment => $auth_environment,
     command     => $auth_cmd,
@@ -71,6 +88,7 @@ define docker::registry(
     cwd         => $cwd,
     path        => ['/bin', '/usr/bin'],
     timeout     => 0,
+    refreshonly => $receipt,
   }
 
 }
