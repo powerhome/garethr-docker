@@ -17,14 +17,28 @@ class docker::repos {
           $key_source = $docker::package_key_source
           $package_key = $docker::package_key
         }
+
+        package { 'debian-keyring':
+          ensure => present,
+        }
+        package { 'debian-archive-keyring':
+          ensure => present,
+        }
+
+        apt::key { 'docker':
+          id     => $package_key,
+          source => $key_source,
+        }
+
         apt::source { 'docker':
-          location          => $location,
-          release           => $docker::package_release,
-          repos             => $docker::package_repos,
-          key               => $package_key,
-          key_source        => $key_source,
-          required_packages => 'debian-keyring debian-archive-keyring',
-          include_src       => false,
+          location => $location,
+          release  => $docker::package_release,
+          repos    => $docker::package_repos,
+          require  => [
+            Package['debian-keyring'],
+            Package['debian-archive-keyring'],
+            Apt::Key['docker'],
+          ]
         }
         $url_split = split($location, '/')
         $repo_host = $url_split[2]
